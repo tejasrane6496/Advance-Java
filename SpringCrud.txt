@@ -1,0 +1,313 @@
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://127.0.0.1:3306/springboot1
+spring.datasource.username=root
+spring.datasource.password=
+
+spring.jpa.generate-ddl=true
+spring.jpa.show-sql=true
+spring.mvc.view.prefix=/views/
+spring.mvc.view.suffix=.jsp
+
+
+spring.web.resources.static-locations=classpath:/static/,C:/Users/91909/OneDrive/Pictures/SpringImage
+
+----------------------------------------------------------------------------------
+package com.example.demo;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class Userform {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private int id;
+	private String username;
+	private String password;
+	private String email;
+	private String number;
+	
+	
+	
+	public Userform() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	public Userform(int id, String username, String password, String email, String number) {
+		super();
+		this.id = id;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+		this.number = number;
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getUsername() {
+		return username;
+	}
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public String getNumber() {
+		return number;
+	}
+	public void setNumber(String number) {
+		this.number = number;
+	}
+	
+	
+
+}
+
+----------------------------------------------------------------------------------
+package com.example.demo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserformRepository extends JpaRepository<Userform, Integer> {
+
+}
+-------------------------------------------------------------------------------
+package com.example.demo;
+import java.util.List;
+
+
+public interface Userservice {
+
+ public List<Userform> getAllUsers();
+ 
+ public Userform getUserById(int id);
+ 
+ public void saveOrUpdate(Userform userform);
+ 
+ public void deleteUser(int id);
+}
+------------------------------------------------------------------------
+package com.example.demo;
+
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class UserserviceImplemantation implements Userservice {
+
+	@Autowired
+	UserformRepository articleRepository;
+
+	@Override
+	public List<Userform> getAllUsers() {
+		return (List<Userform>) articleRepository.findAll();
+	}
+
+	@Override
+	public Userform getUserById(int id) {
+		return articleRepository.findById(id).get();
+	}
+
+	@Override
+	public void saveOrUpdate(Userform article) {
+		articleRepository.save(article);
+	}
+
+	@Override
+	public void deleteUser(int id) {
+		articleRepository.deleteById(id);
+	}
+
+}
+-----------------------------------------------------------------------------------
+package com.example.demo;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+
+@Controller
+@RequestMapping(value="/article")
+public class UserformAction {
+
+ @Autowired
+ Userservice articleService;
+ 
+ @RequestMapping(value="/list", method=RequestMethod.GET)
+ public ModelAndView list() {
+  ModelAndView model = new ModelAndView("article_list");
+  List<Userform> articleList = articleService.getAllUsers();
+  model.addObject("articleList", articleList);
+  
+  return model;
+ }
+ 
+ @RequestMapping(value="/addArticle/", method=RequestMethod.GET)
+ public ModelAndView addArticle() {
+  ModelAndView model = new ModelAndView();
+  
+  Userform article = new Userform();
+  model.addObject("articleForm", article);
+  model.setViewName("article_form");
+  
+  return model;
+ }
+ 
+ @RequestMapping(value="/updateArticle/{id}", method=RequestMethod.GET)
+ public ModelAndView editArticle(@PathVariable int id) {
+  ModelAndView model = new ModelAndView();
+  
+  Userform article = articleService.getUserById(id);
+  model.addObject("articleForm", article);
+  model.setViewName("article_form");
+  
+  return model;
+ }
+ 
+ @RequestMapping(value="/saveArticle", method=RequestMethod.POST)
+ public ModelAndView save(@ModelAttribute("articleForm") Userform article) {
+  articleService.saveOrUpdate(article);
+  
+  return new ModelAndView("redirect:/article/list");
+ }
+ 
+ @RequestMapping(value="/deleteArticle/{id}", method=RequestMethod.GET)
+ public ModelAndView delete(@PathVariable("id") int id) {
+  articleService.deleteUser(id);
+  
+  return new ModelAndView("redirect:/article/list");
+ }
+}
+
+-----------------------------------------------------------------------------------
+
+***article_form.jsp*****
+
+
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>User Registration Form</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+</head>
+
+<body>
+	<div class="container">
+		<spring:url value="/article/saveArticle" var="saveURL" />
+		<h2>User</h2>
+		<form:form modelAttribute="articleForm" method="post"
+			action="${saveURL }" cssClass="form">
+			<form:hidden path="id" />
+			<div class="form-group">
+				<label>Username</label>
+				<form:input path="username" cssClass="form-control" id="username" />
+			</div>
+			<div class="form-group">
+				<label>Password</label>
+				<form:input path="password" cssClass="form-control" id="password" />
+			</div>
+			<div class="form-group">
+				<label>email</label>
+				<form:input path="email" cssClass="form-control" id="email" />
+			</div>
+			<div class="form-group">
+				<label>Mobile</label>
+				<form:input path="number" cssClass="form-control" id="number" />
+			</div>
+			<button type="submit" class="btn btn-primary">Save</button>
+		</form:form>
+
+	</div>
+</body>
+</html>
+
+--------------------------------------------------------------------------
+*******article_list.jsp***
+
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>User List</title>
+
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
+	crossorigin="anonymous">
+
+</head>
+<body>
+	<div class="container">
+		<h2>User List</h2>
+		<table class="table table-striped">
+			<thead>
+				<th scope="row">#ID</th>
+				<th scope="row">Username</th>
+				<th scope="row">Email</th>
+				<th scope="row">Mobile</th>
+				<th scope="row">Update</th>
+				<th scope="row">Delete</th>
+			</thead>
+			<tbody>
+				<c:forEach items="${articleList }" var="article">
+					<tr>
+						<td>${article.id }</td>
+						<td>${article.username }</td>
+						<td>${article.email }</td>
+						<td>${article.number }</td>
+						<td><spring:url value="/article/updateArticle/${article.id }"
+								var="updateURL" /> <a class="btn btn-primary"
+							href="${updateURL }" role="button">Update</a></td>
+						<td><spring:url value="/article/deleteArticle/${article.id }"
+								var="deleteURL" /> <a class="btn btn-primary"
+							href="${deleteURL }" role="button">Delete</a></td>
+					</tr>
+				</c:forEach>
+			</tbody>
+		</table>
+		<spring:url value="/article/addArticle/" var="addURL" />
+		<a class="btn btn-primary" href="${addURL }" role="button">Add New
+			User<a>
+	</div>
+</body>
+</html>
